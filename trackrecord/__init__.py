@@ -68,19 +68,8 @@ class ScopusAnalysis:
         plt.ylabel('# of publications')
         plt.bar(labels, values)
         if moving_average:
-            def moving_average(labels, values):
-                dictionary = dict(zip(labels, values))
-                results = []
-                for year in range(min(labels), max(labels)+1):
-                    five_year_tally = 0
-                    for sum_year in range(year-4,year+1):
-                        if sum_year in dictionary:
-                            five_year_tally += dictionary[sum_year]
-                    results.append(five_year_tally / 5)
-                return results
-            # note: removal of labels and use of 'valid' mode is intended to avoid edge effects
-            sorted_years = np.sort(labels)
-            average, = plt.plot(sorted_years, moving_average(labels, values), 'r-', label='Moving average (past 5 years)')
+            mv_years, mv_values = _moving_past_average(dict(zip(labels, values)), 5)
+            average, = plt.plot(mv_years, mv_values, 'r-', label='Moving average (past 5 years)')
             plt.legend(handles=[average])
         plt.show()
 
@@ -115,3 +104,15 @@ class ePrintAnalysis:
                 author_surnames.append(author_name.split(',')[0])
         author_surnames = [x.strip() for x in author_surnames]
         return Counter(author_surnames).most_common()[1:]
+
+
+def _moving_past_average(dictionary, window = 5):
+    mv_keys = list(range(min(dictionary), max(dictionary) + 1))
+    mv_values = []
+    for mv_key in mv_keys:
+        window_tally = 0
+        for sum_year in range(mv_key - window + 1, mv_key + 1):
+            if sum_year in dictionary:
+                window_tally += dictionary[sum_year]
+        mv_values.append(window_tally / window)
+    return mv_keys, mv_values
